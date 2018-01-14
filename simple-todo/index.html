@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Simple Todo</title>
+
+	<link rel="stylesheet" href="base.css">
+</head>
+<body>
+	<div id="template-wrapper" hidden>
+		<ul>
+			<li class="task" data-template="todo-item"></li>
+		</ul>
+	</div>
+
+	<div id="page-wrapper">
+		<header>
+			<h1 class="title">Simple <span class="alt">Todo</span></h1>
+
+			<p class="subtitle">A simple todo list made with VanillaJS. </p>
+			<p>Based on the <a href="http://cauequeiroz.com.br/simpletodo/">project of the same name</a> by <a href="http://cauequeiroz.com.br/about/">Caue Queiroz</a>.</p>
+		</header>
+
+		<main>
+			<form class="form" autocomplete="off" novalidate data-is="task-form">
+				<input type="text" name="task-text" class="form-control" placeholder="Add a task..." required>
+
+				<button class="btn">Add</button>
+			</form>
+
+			<ul class="task-list" data-is="task-list"></ul>
+		</main>
+	</div>
+
+	<script src="./app.js"></script>
+</body>
+</html>
