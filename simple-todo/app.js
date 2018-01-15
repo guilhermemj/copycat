@@ -74,11 +74,41 @@ const app = (() => {
 
 			if (!this.DOM.form) throw new ReferenceError('Form element not found');
 
+			this.DOM.input = this.DOM.form.querySelector('[name=task-text]');
+
+			if (!this.DOM.input) throw new ReferenceError('Input element not found');
+
 			this.addEventListeners();
 		}
 
 		addEventListeners() {
+			this.DOM.form.addEventListener('submit', (event) => {
+				event.preventDefault();
+				event.stopPropagation();
 
+				this.validate();
+			});
+		}
+
+		validate() {
+			this.DOM.form.classList.add('was-validated');
+
+			if (!this.DOM.form.checkValidity()) return;
+
+			this.submit(this.DOM.input.value);
+		}
+
+		submit(data) {
+			this.DOM.form.dispatchEvent(
+				new CustomEvent('validSubmit', { detail: data })
+			);
+
+			this.reset();
+		}
+
+		reset() {
+			this.DOM.form.classList.remove('was-validated');
+			this.DOM.form.reset();
 		}
 	}
 
@@ -100,7 +130,7 @@ const app = (() => {
 		init() {
 			this.DOM.list = document.querySelector(this._selector);
 
-			if (!this.DOM.list) throw new ReferenceError('Form element not found');
+			if (!this.DOM.list) throw new ReferenceError('List element not found');
 
 			this.addEventListeners();
 		}
@@ -132,7 +162,10 @@ const app = (() => {
 		}
 
 		addEventListeners() {
-
+			this.taskForm.DOM.form.addEventListener('validSubmit', (event) => {
+				const formData = event.detail;
+				console.log(formData);
+			});
 		}
 	}
 
