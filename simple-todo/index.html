@@ -6,6 +6,7 @@
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 	<title>Simple Todo</title>
 
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:300,400,700">
 	<link rel="stylesheet" href="base.css">
 </head>
 <body>
@@ -15,23 +16,28 @@
 		</ul>
 	</div>
 
-	<div id="page-wrapper">
-		<header>
-			<h1 class="title">Simple <span class="alt">Todo</span></h1>
+	<div class="page-wrapper">
+		<header class="page-header">
+			<div class="container">
+				<h1 class="title">Simple<span class="bold">Todo</span></h1>
 
-			<p class="subtitle">A simple todo list made with VanillaJS. </p>
-			<p>Based on the <a href="http://cauequeiroz.com.br/simpletodo/">project of the same name</a> by <a href="http://cauequeiroz.com.br/about/">Caue Queiroz</a>.</p>
+				<p class="subtitle">A simple to-do list developed with VanillaJS. </p>
+			</div>
 		</header>
 
-		<main>
-			<form class="form" autocomplete="off" novalidate data-is="task-form">
-				<input type="text" name="task-text" class="form-control" placeholder="Add a task..." required>
-
-				<button class="btn">Add</button>
+		<main class="page-content container">
+			<form class="task-form" autocomplete="off" novalidate data-is="task-form">
+				<input type="text" name="task-text" class="task-input" placeholder="Add a task..." required>
 			</form>
 
 			<ul class="task-list" data-is="task-list"></ul>
 		</main>
+
+		<footer class="page-footer">
+			<p class="container">
+				Based on the <a href="https://github.com/cauequeiroz/simpletodo" target="_blank" class="bold">project of the same name</a> by <a href="http://cauequeiroz.com.br/about/" target="_blank" class="bold">Caue Queiroz</a>.
+			</p>
+		</footer>
 	</div>
 
 	<script src="./app.js"></script>
