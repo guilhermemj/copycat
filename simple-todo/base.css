@@ -1,5 +1,6 @@
 
-/*  Scaffolding
+/* =============
+    Scaffolding
    ============= */
 
 html,
@@ -32,25 +33,28 @@ html *::after {
 }
 
 .container {
-	max-width: 50rem;
+	max-width: 52rem;
 	margin: auto;
 	padding: 0 1rem;
 }
 
+/* Elements base styling */
 p {
 	margin: 0 0 .25rem;
 }
 
+/* Helper Classes */
 .bold {
 	font-weight: 700;
 }
 
 
-/*  Header
+/* ========
+    Header
    ======== */
 
 .page-header {
-	padding-top: 2rem;
+	padding: 2rem 0 1.5rem;
 
 	text-align: center;
 }
@@ -71,6 +75,7 @@ p {
 @media (min-width: 768px) {
 	.page-header {
 		padding-top: 4rem;
+		padding-bottom: 3rem;
 	}
 
 	.title {
@@ -79,8 +84,9 @@ p {
 }
 
 
-/*  Footer
-   ========= */
+/* ========
+    Footer
+   ======== */
 
 .page-wrapper {
 	padding-bottom: 3rem;
@@ -100,15 +106,40 @@ p {
 	text-align: center;
 }
 
-.page-footer a,
-.page-footer a:hover,
-.page-footer a:focus {
+.page-footer a {
 	color: inherit;
 	text-decoration: none;
+}
+
+.page-footer a:hover {
+	text-decoration: underline;
 }
 
 @media (min-width: 400px) {
 	.page-footer {
 		padding: 1rem;
 	}
+}
+
+
+/* ===========
+    Task Form
+   =========== */
+
+.task-input {
+	background-color: transparent;
+	width: 100%;
+	padding: 0 1.25rem;
+
+	font-family: inherit;
+	font-size: 1.75rem;
+	font-weight: 300;
+	line-height: 2;
+
+	border: none 1px #bdc3c7;
+	border-bottom-style: solid;
+}
+
+.task-input:focus {
+	outline: none;
 }
