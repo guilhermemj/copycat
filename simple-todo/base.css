@@ -129,12 +129,12 @@ p {
 .task-input {
 	background-color: transparent;
 	width: 100%;
-	padding: 0 1.25rem;
+	padding: 0.5em 1.25rem;
 
 	font-family: inherit;
 	font-size: 1.75rem;
 	font-weight: 300;
-	line-height: 2;
+	line-height: 1;
 
 	border: none 1px #bdc3c7;
 	border-bottom-style: solid;
@@ -142,4 +142,57 @@ p {
 
 .task-input:focus {
 	outline: none;
+}
+
+
+/* ===========
+    Task List
+   =========== */
+
+.task-list {
+	margin: 0;
+	padding: 1.25rem 0;
+	list-style: none;
+}
+
+.task {
+	position: relative;
+	padding: 1.25rem;
+
+	color: #333;
+	line-height: 1.25rem;
+
+	cursor: pointer;
+	transition: all .25s;
+}
+
+.task:hover {
+	background-color: rgba(0, 0, 0, .04);
+}
+
+.task.task-complete {
+	color: #95a5a6;
+	text-decoration: line-through;
+}
+
+.task .close-btn {
+	position: absolute;
+	right: 1.25rem;
+
+	background: none;
+
+	color: #7f8c8d;
+	font: inherit;
+
+	border: none;
+	cursor: pointer;
+	transition: opacity .25s, color .25s;
+}
+
+.task:not(:hover) .close-btn {
+	opacity: 0;
+}
+
+.task .close-btn:hover {
+	color: #333;
 }
