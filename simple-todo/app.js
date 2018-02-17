@@ -49,6 +49,86 @@ const { LocalStorageDataBase, Task } = (() => {
 })();
 
 
+// =====================
+//  Task List Interface
+// =====================
+
+const taskListInterface = (() => {
+	const dataBase   = new LocalStorageDataBase('simpleDB');
+	const storedData = dataBase.loadData();
+	const taskList   = storedData ? storedData.map(Task.parse) : [];
+
+	const isValidId = (taskId) => (
+		typeof taskId === 'string' ||
+		typeof taskId === 'number'
+	);
+
+	// GET Method
+	const getData = (taskId) => {
+		if (typeof taskId == 'undefined') return taskList;
+
+		if (!isValidId(taskId)) throw new TypeError('Invalid task ID');
+
+		const foundTask = taskList.find((task) => task.id == taskId);
+
+		if (!foundTask) throw new ReferenceError('Task not found');
+
+		return foundTask;
+	};
+
+	// POST Method
+	const addItem = (data) => {
+		const task = (data instanceof Task) ? data : Task.parse(data);
+
+		taskList.push(task);
+		dataBase.saveData(taskList);
+	};
+
+	// PUT Method
+	const updateItem = (taskId, data) => {
+		if (!isValidId(taskId)) throw new TypeError('Invalid task ID');
+
+		const taskIndex = taskList.findIndex((task) => task.id == taskId);
+
+		if (taskIndex == -1) throw new ReferenceError('Task not found');
+
+		const targetTask = taskList[taskIndex];
+
+		Object.keys(targetTask).forEach((value, key) => {
+			// Add validation for "protected" attributes like ID
+			console.log(key, value);
+
+			if (
+				typeof data[key] === 'undefined' ||
+				data[key] === targetTask[key]
+			) return;
+
+			targetTask[key] = data[key];
+		});
+
+		dataBase.saveData(taskList);
+	};
+
+	// DELETE Method
+	const deleteItem = (taskId) => {
+		if (!isValidId(taskId)) throw new TypeError('Invalid task ID');
+
+		const taskIndex = taskList.findIndex((task) => task.id == taskId);
+
+		if (taskIndex == -1) throw new ReferenceError('Task not found');
+
+		taskList.splice(taskIndex, 1);
+	};
+
+	return {
+		get: getData,
+		add: addItem,
+		update: updateItem,
+		delete: deleteItem,
+	}
+})();
+
+
 // ======================
 //  DOM-Relative Classes
 // ======================
@@ -176,7 +256,6 @@ const simpleTodo = (() => {
 	};
 
 
-
 	//  Task List
 	// -----------
 
@@ -256,16 +335,18 @@ const simpleTodo = (() => {
 			// Create DOM interacting instances
 			this.taskForm = new SimpleForm('[data-is=task-form]');
 			this.taskList = new TaskList('[data-is=task-list]');
-
-			// Create DB instance
-			this.simpleDB = new LocalStorageDataBase('simpleDB');
-
-			this.data = { list: [] };
 		}
 
 		init() {
 			this.taskForm.init();
 			this.taskList.init();
+
+			const storedData = taskListInterface.get();
+
+			// Add stored tasks
+			if (!!storedData) {
+				storedData.forEach((task) => { this.taskList.add(task); });
+			}
 
 			this.addEventListeners();
 		}
@@ -276,8 +357,7 @@ const simpleTodo = (() => {
 				const newTask  = new Task(formData, false);
 
 				// API -> POST
-				this.data.list.push(newTask);
-				this.updateData();
+				taskListInterface.add(newTask);
 
 				// Update DOM
 				this.taskList.add(newTask);
@@ -287,12 +367,8 @@ const simpleTodo = (() => {
 				const taskId = event.detail;
 
 				// API -> DELETE
-				console.log(`Task ${taskId} removed`);
+				taskListInterface.delete(taskId);
 			});
-		}
-
-		updateData() {
-			this.simpleDB.saveData(this.data.list);
 		}
 	}
 
