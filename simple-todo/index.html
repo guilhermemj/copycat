@@ -10,11 +10,12 @@
 	<link rel="stylesheet" href="base.css">
 </head>
 <body>
-	<div id="template-wrapper" hidden>
-		<ul>
-			<li class="task" data-template="todo-item"></li>
-		</ul>
-	</div>
+	<script type="text/template" id="task-template">
+		<li class="task" data-is="task" data-id="{{id}}">
+			{{text}}
+			<button class="close-btn" data-action="remove">remove</button>
+		</li>
+	</script>
 
 	<div class="page-wrapper">
 		<header class="page-header">

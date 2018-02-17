@@ -1,4 +1,4 @@
-const app = (() => {
+const simpleTodo = (() => {
 
 	//  Helper Functions
 	// ------------------
@@ -14,6 +14,37 @@ const app = (() => {
 		} else {
 			document.addEventListener('DOMContentLoaded', fn);
 		}
+	};
+
+	const elementMatchesSelector = (element, selector) => (
+		(
+			element.matches ||
+			element.matchesSelector ||
+			element.msMatchesSelector ||
+			element.mozMatchesSelector ||
+			element.webkitMatchesSelector ||
+			element.oMatchesSelector
+		).call(element, selector)
+	);
+
+	const delegateEvent = (element, eventName, selector, handler) => {
+		element.addEventListener(eventName, (event) => {
+			if (event.target && elementMatchesSelector(event.target, selector)) {
+				handler(event);
+			}
+		});
+	};
+
+	const simpleTemplateRender = (template, context) => {
+		const isValidValue = (value) => (
+			typeof value !== 'undefined' &&
+			value !== null
+		);
+
+		return template.replace(
+			/{{([^]*?)}}/g,
+			(originalString, key) => (isValidValue(context[key]) ? context[key] : originalString)
+		);
 	};
 
 
@@ -67,6 +98,9 @@ const app = (() => {
 
 			this._selector = selector;
 			this.DOM = {};
+			this.classes = {
+				validityChecked: 'was-validated'
+			};
 		}
 
 		init() {
@@ -91,7 +125,7 @@ const app = (() => {
 		}
 
 		validate() {
-			this.DOM.form.classList.add('was-validated');
+			this.DOM.form.classList.add(this.classes.validityChecked);
 
 			if (!this.DOM.form.checkValidity()) return;
 
@@ -107,14 +141,14 @@ const app = (() => {
 		}
 
 		reset() {
-			this.DOM.form.classList.remove('was-validated');
+			this.DOM.form.classList.remove(this.classes.validityChecked);
 			this.DOM.form.reset();
 		}
 	}
 
 
-	//
-	//
+	//  Task List
+	// -----------
 
 	class TaskList {
 		constructor(selector) {
@@ -125,6 +159,9 @@ const app = (() => {
 
 			this._selector = selector;
 			this.DOM = {};
+			this.classes = {
+				taskComplete: 'task-complete'
+			};
 		}
 
 		init() {
@@ -136,7 +173,47 @@ const app = (() => {
 		}
 
 		addEventListeners() {
+			delegateEvent(this.DOM.list, 'click', '.task', (event) => {
+				event.target.classList.toggle(this.classes.taskComplete);
+			});
 
+			delegateEvent(this.DOM.list, 'click', '[data-action=remove]', (event) => {
+				if (!event.target) return;
+
+				event.preventDefault();
+				event.stopPropagation();
+
+				const taskId = event.target.parentNode.getAttribute('data-id');
+				this.remove(taskId);
+			});
+		}
+
+		add(task) {
+			console.log(`adding task "${task.id}:${task.text}"`);
+
+			//if (!(task instanceof Task)) throw new TypeError(`"${task}" is not a valid task.`);
+
+			const taskTemplate = document.getElementById('task-template');
+
+			if (!taskTemplate) throw new ReferenceError('Task template was not found');
+
+			this.DOM.list.innerHTML += simpleTemplateRender(taskTemplate.innerHTML, task);
+
+			this.DOM.list.dispatchEvent(
+				new CustomEvent('taskAdded', { detail: task })
+			);
+		}
+
+		remove(taskId) {
+			const targetTask = this.DOM.list.querySelector(`[data-id="${taskId}"]`);
+
+			if (!targetTask) throw new ReferenceError(`No elements with taskId = ${taskId}.`);
+
+			this.DOM.list.removeChild(targetTask);
+
+			this.DOM.list.dispatchEvent(
+				new CustomEvent('taskRemoved', { detail: taskId })
+			);
 		}
 	}
 
@@ -152,6 +229,7 @@ const app = (() => {
 			// Create DB instance
 			this.simpleDB = new ModelClass('simpleDB');
 
+			this.data = { list: [] };
 		}
 
 		init() {
@@ -164,19 +242,33 @@ const app = (() => {
 		addEventListeners() {
 			this.taskForm.DOM.form.addEventListener('validSubmit', (event) => {
 				const formData = event.detail;
-				console.log(formData);
+
+				console.log(`Text "${formData}" submited`);
+				this.taskList.add(new Task(formData, false));
+			});
+
+			this.taskList.DOM.list.addEventListener('taskAdded', (event) => {
+				const task = event.detail;
+
+				console.log(`Task "${task.id}:${task.text}" added`);
+			});
+
+			this.taskList.DOM.list.addEventListener('taskRemoved', (event) => {
+				const taskId = event.detail;
+
+				console.log(`Task ${taskId} removed`);
 			});
 		}
 	}
 
-	// Create app instance
-	const app = new SimpleTodo();
+	// Create singleton instance
+	const singleton = new SimpleTodo();
 
 	// Init application when DOM has loaded
 	onDocumentReady(() => {
-		app.init();
+		singleton.init();
 	});
 
-	// Make app available globally
-	return app;
+	// Make it available globally
+	return singleton;
 })();

@@ -104,6 +104,8 @@ p {
 	color: #7f8c8d;
 	font-size: .8rem;
 	text-align: center;
+
+	box-shadow: 0 0 50px rgba(0, 0, 0, .1);
 }
 
 .page-footer a {
