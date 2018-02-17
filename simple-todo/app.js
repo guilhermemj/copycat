@@ -1,51 +1,13 @@
-const simpleTodo = (() => {
+// =======================
+//  Data-Relative Classes
+// =======================
 
-	//  Helper Functions
-	// ------------------
+const { LocalStorageDataBase, Task } = (() => {
 
-	const onDocumentReady = (fn) => {
-		const hasDOMLoaded = (document.attachEvent ?
-			document.readyState === "complete" :
-			document.readyState !== "loading"
-		);
+	//  LocalStorage interaction class
+	// --------------------------------
 
-		if (hasDOMLoaded) {
-			fn();
-		} else {
-			document.addEventListener('DOMContentLoaded', fn);
-		}
-	};
-
-	// IE9+ Element.matches polyfill
-	if (!Element.prototype.matches) {
-		Element.prototype.matches = Element.prototype.msMatchesSelector;
-	}
-
-	const delegateEvent = (element, eventName, selector, handler) => {
-		element.addEventListener(eventName, (event) => {
-			if (event.target && event.target.matches(selector)) {
-				handler(event);
-			}
-		});
-	};
-
-	const simpleTemplateRender = (template, context) => {
-		const isValidValue = (value) => (
-			typeof value !== 'undefined' &&
-			value !== null
-		);
-
-		return template.replace(
-			/{{([^]*?)}}/g,
-			(originalString, key) => (isValidValue(context[key]) ? context[key] : originalString)
-		);
-	};
-
-
-	//  Data Persistence Class
-	// ------------------------
-
-	class ModelClass {
+	class LocalStorageDataBase {
 		constructor(namespace) {
 			this.namespace = namespace;
 		}
@@ -60,8 +22,8 @@ const simpleTodo = (() => {
 	}
 
 
-	//  Task Class
-	// -------------
+	//  Task Data Class
+	// -----------------
 
 	let TaskIdCounter = 0;
 	const getNextTaskId = () => TaskIdCounter++;
@@ -79,6 +41,19 @@ const simpleTodo = (() => {
 		}
 	}
 
+	// "export"
+	return {
+		LocalStorageDataBase,
+		Task,
+	};
+})();
+
+
+// ======================
+//  DOM-Relative Classes
+// ======================
+
+const { SimpleForm } = (() => {
 
 	//  Simple Form
 	// -------------
@@ -146,6 +121,61 @@ const simpleTodo = (() => {
 		}
 	}
 
+	// "export"
+	return {
+		SimpleForm,
+	};
+})();
+
+
+// =============
+//  Application
+// =============
+
+const simpleTodo = (() => {
+
+	//  Helper Functions
+	// ------------------
+
+	const onDocumentReady = (fn) => {
+		const hasDOMLoaded = (document.attachEvent ?
+			document.readyState === "complete" :
+			document.readyState !== "loading"
+		);
+
+		if (hasDOMLoaded) {
+			fn();
+		} else {
+			document.addEventListener('DOMContentLoaded', fn);
+		}
+	};
+
+	// IE9+ Element.matches polyfill
+	if (!Element.prototype.matches) {
+		Element.prototype.matches = Element.prototype.msMatchesSelector;
+	}
+
+	const delegateEvent = (element, eventName, selector, handler) => {
+		element.addEventListener(eventName, (event) => {
+			if (event.target && event.target.matches(selector)) {
+				handler(event);
+			}
+		});
+	};
+
+	const simpleTemplateRender = (template, context) => {
+		const isValidValue = (value) => (
+			typeof value !== 'undefined' &&
+			value !== null
+		);
+
+		return template.replace(
+			/{{([^]*?)}}/g,
+			(originalString, key) => (isValidValue(context[key]) ? context[key] : originalString)
+		);
+	};
+
+
 
 	//  Task List
 	// -----------
@@ -165,11 +195,15 @@ const simpleTodo = (() => {
 		}
 
 		init() {
+			this.updateElementReferences();
+
+			this.addEventListeners();
+		}
+
+		updateElementReferences() {
 			this.DOM.list = document.querySelector(this._selector);
 
 			if (!this.DOM.list) throw new ReferenceError('List element not found');
-
-			this.addEventListeners();
 		}
 
 		addEventListeners() {
@@ -189,10 +223,6 @@ const simpleTodo = (() => {
 		}
 
 		add(task) {
-			console.log(`adding task "${task.id}:${task.text}"`);
-
-			//if (!(task instanceof Task)) throw new TypeError(`"${task}" is not a valid task.`);
-
 			const taskTemplate = document.getElementById('task-template');
 
 			if (!taskTemplate) throw new ReferenceError('Task template was not found');
@@ -223,11 +253,12 @@ const simpleTodo = (() => {
 
 	class SimpleTodo {
 		constructor () {
+			// Create DOM interacting instances
 			this.taskForm = new SimpleForm('[data-is=task-form]');
 			this.taskList = new TaskList('[data-is=task-list]');
 
 			// Create DB instance
-			this.simpleDB = new ModelClass('simpleDB');
+			this.simpleDB = new LocalStorageDataBase('simpleDB');
 
 			this.data = { list: [] };
 		}
@@ -242,21 +273,26 @@ const simpleTodo = (() => {
 		addEventListeners() {
 			this.taskForm.DOM.form.addEventListener('validSubmit', (event) => {
 				const formData = event.detail.formData;
+				const newTask  = new Task(formData, false);
 
-				this.taskList.add(new Task(formData, false));
-			});
+				// API -> POST
+				this.data.list.push(newTask);
+				this.updateData();
 
-			this.taskList.DOM.list.addEventListener('taskAdded', (event) => {
-				const task = event.detail;
-
-				console.log(`Task "${task.id}:${task.text}" added`);
+				// Update DOM
+				this.taskList.add(newTask);
 			});
 
 			this.taskList.DOM.list.addEventListener('taskRemoved', (event) => {
 				const taskId = event.detail;
 
+				// API -> DELETE
 				console.log(`Task ${taskId} removed`);
 			});
+		}
+
+		updateData() {
+			this.simpleDB.saveData(this.data.list);
 		}
 	}
 
