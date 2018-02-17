@@ -118,6 +118,7 @@ const taskListInterface = (() => {
 		if (taskIndex == -1) throw new ReferenceError('Task not found');
 
 		taskList.splice(taskIndex, 1);
+		dataBase.saveData(taskList);
 	};
 
 	return {
@@ -133,7 +134,7 @@ const taskListInterface = (() => {
 //  DOM-Relative Classes
 // ======================
 
-const { SimpleForm } = (() => {
+const { SimpleForm, SimpleList } = (() => {
 
 	//  Simple Form
 	// -------------
@@ -201,9 +202,78 @@ const { SimpleForm } = (() => {
 		}
 	}
 
+
+	const simpleTemplateRender = (template, context) => {
+		const isValidValue = (value) => (
+			typeof value !== 'undefined' &&
+			value !== null
+		);
+
+		return template.replace(
+			/{{([^]*?)}}/g,
+			(originalString, key) => (isValidValue(context[key]) ? context[key] : originalString)
+		);
+	};
+
+
+	//  Simple List
+	// -------------
+
+	class SimpleList {
+		constructor(selector) {
+			if (
+				typeof selector !== 'string' ||
+				selector === ''
+			) throw new TypeError(`'${selector}' is not a valid selector.`);
+
+			this._selector = selector;
+			this.DOM = {};
+		}
+
+		init() {
+			this.updateElementReferences();
+		}
+
+		updateElementReferences() {
+			this.DOM.list = document.querySelector(this._selector);
+
+			if (!this.DOM.list) throw new ReferenceError('List element not found');
+		}
+
+		add(item) {
+			// TODO: Add flexibility to template getting.
+			const templateWrapper = document.getElementById('task-template');
+
+			if (!templateWrapper) throw new ReferenceError('Template element was not found');
+
+			this.DOM.list.innerHTML += simpleTemplateRender(templateWrapper.innerHTML, item);
+
+			this.DOM.list.dispatchEvent(
+				new CustomEvent('itemAdded', {
+					detail: { item }
+				})
+			);
+		}
+
+		remove(itemId) {
+			const targetItem = this.DOM.list.querySelector(`[data-id="${itemId}"]`);
+
+			if (!targetItem) throw new ReferenceError(`No elements with data-id="${itemId}".`);
+
+			this.DOM.list.removeChild(targetItem);
+
+			this.DOM.list.dispatchEvent(
+				new CustomEvent('itemRemoved', {
+					detail: { itemId }
+				})
+			);
+		}
+	}
+
 	// "export"
 	return {
 		SimpleForm,
+		SimpleList,
 	};
 })();
 
@@ -230,11 +300,6 @@ const simpleTodo = (() => {
 		}
 	};
 
-	// IE9+ Element.matches polyfill
-	if (!Element.prototype.matches) {
-		Element.prototype.matches = Element.prototype.msMatchesSelector;
-	}
-
 	const delegateEvent = (element, eventName, selector, handler) => {
 		element.addEventListener(eventName, (event) => {
 			if (event.target && event.target.matches(selector)) {
@@ -242,89 +307,6 @@ const simpleTodo = (() => {
 			}
 		});
 	};
-
-	const simpleTemplateRender = (template, context) => {
-		const isValidValue = (value) => (
-			typeof value !== 'undefined' &&
-			value !== null
-		);
-
-		return template.replace(
-			/{{([^]*?)}}/g,
-			(originalString, key) => (isValidValue(context[key]) ? context[key] : originalString)
-		);
-	};
-
-
-	//  Task List
-	// -----------
-
-	class TaskList {
-		constructor(selector) {
-			if (
-				typeof selector !== 'string' ||
-				selector === ''
-			) throw new TypeError(`'${selector}' is not a valid selector.`);
-
-			this._selector = selector;
-			this.DOM = {};
-			this.classes = {
-				taskComplete: 'task-complete'
-			};
-		}
-
-		init() {
-			this.updateElementReferences();
-
-			this.addEventListeners();
-		}
-
-		updateElementReferences() {
-			this.DOM.list = document.querySelector(this._selector);
-
-			if (!this.DOM.list) throw new ReferenceError('List element not found');
-		}
-
-		addEventListeners() {
-			delegateEvent(this.DOM.list, 'click', '.task', (event) => {
-				event.target.classList.toggle(this.classes.taskComplete);
-			});
-
-			delegateEvent(this.DOM.list, 'click', '[data-action=remove]', (event) => {
-				if (!event.target) return;
-
-				event.preventDefault();
-				event.stopPropagation();
-
-				const taskId = event.target.parentNode.getAttribute('data-id');
-				this.remove(taskId);
-			});
-		}
-
-		add(task) {
-			const taskTemplate = document.getElementById('task-template');
-
-			if (!taskTemplate) throw new ReferenceError('Task template was not found');
-
-			this.DOM.list.innerHTML += simpleTemplateRender(taskTemplate.innerHTML, task);
-
-			this.DOM.list.dispatchEvent(
-				new CustomEvent('taskAdded', { detail: task })
-			);
-		}
-
-		remove(taskId) {
-			const targetTask = this.DOM.list.querySelector(`[data-id="${taskId}"]`);
-
-			if (!targetTask) throw new ReferenceError(`No elements with taskId = ${taskId}.`);
-
-			this.DOM.list.removeChild(targetTask);
-
-			this.DOM.list.dispatchEvent(
-				new CustomEvent('taskRemoved', { detail: taskId })
-			);
-		}
-	}
 
 
 	//  Application Class
@@ -334,7 +316,7 @@ const simpleTodo = (() => {
 		constructor () {
 			// Create DOM interacting instances
 			this.taskForm = new SimpleForm('[data-is=task-form]');
-			this.taskList = new TaskList('[data-is=task-list]');
+			this.taskList = new SimpleList('[data-is=task-list]');
 		}
 
 		init() {
@@ -363,11 +345,24 @@ const simpleTodo = (() => {
 				this.taskList.add(newTask);
 			});
 
-			this.taskList.DOM.list.addEventListener('taskRemoved', (event) => {
-				const taskId = event.detail;
+			delegateEvent(this.taskList.DOM.list, 'click', '.task', (event) => {
+				// TODO: Finish this
+				event.target.classList.toggle('task-complete');
+			});
+
+			delegateEvent(this.taskList.DOM.list, 'click', '[data-action=remove]', (event) => {
+				if (!event.target) return;
+
+				event.preventDefault();
+				event.stopPropagation();
+
+				const taskId = event.target.parentNode.getAttribute('data-id');
 
 				// API -> DELETE
 				taskListInterface.delete(taskId);
+
+				// Update DOM
+				this.taskList.remove(taskId);
 			});
 		}
 	}
