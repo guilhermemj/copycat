@@ -16,20 +16,14 @@ const simpleTodo = (() => {
 		}
 	};
 
-	const elementMatchesSelector = (element, selector) => (
-		(
-			element.matches ||
-			element.matchesSelector ||
-			element.msMatchesSelector ||
-			element.mozMatchesSelector ||
-			element.webkitMatchesSelector ||
-			element.oMatchesSelector
-		).call(element, selector)
-	);
+	// IE9+ Element.matches polyfill
+	if (!Element.prototype.matches) {
+		Element.prototype.matches = Element.prototype.msMatchesSelector;
+	}
 
 	const delegateEvent = (element, eventName, selector, handler) => {
 		element.addEventListener(eventName, (event) => {
-			if (event.target && elementMatchesSelector(event.target, selector)) {
+			if (event.target && event.target.matches(selector)) {
 				handler(event);
 			}
 		});
