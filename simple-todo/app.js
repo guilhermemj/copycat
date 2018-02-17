@@ -86,10 +86,10 @@ const simpleTodo = (() => {
 	}
 
 
-	//  Task Form
-	// ------------
+	//  Simple Form
+	// -------------
 
-	class TaskForm {
+	class SimpleForm {
 		constructor(selector) {
 			if (
 				typeof selector !== 'string' ||
@@ -104,6 +104,12 @@ const simpleTodo = (() => {
 		}
 
 		init() {
+			this.updateElementReferences();
+
+			this.addEventListeners();
+		}
+
+		updateElementReferences() {
 			this.DOM.form = document.querySelector(this._selector);
 
 			if (!this.DOM.form) throw new ReferenceError('Form element not found');
@@ -111,8 +117,6 @@ const simpleTodo = (() => {
 			this.DOM.input = this.DOM.form.querySelector('[name=task-text]');
 
 			if (!this.DOM.input) throw new ReferenceError('Input element not found');
-
-			this.addEventListeners();
 		}
 
 		addEventListeners() {
@@ -134,7 +138,9 @@ const simpleTodo = (() => {
 
 		submit(data) {
 			this.DOM.form.dispatchEvent(
-				new CustomEvent('validSubmit', { detail: data })
+				new CustomEvent('validSubmit', {
+					detail: { formData: data }
+				})
 			);
 
 			this.reset();
@@ -223,7 +229,7 @@ const simpleTodo = (() => {
 
 	class SimpleTodo {
 		constructor () {
-			this.taskForm = new TaskForm('[data-is=task-form]');
+			this.taskForm = new SimpleForm('[data-is=task-form]');
 			this.taskList = new TaskList('[data-is=task-list]');
 
 			// Create DB instance
@@ -241,9 +247,8 @@ const simpleTodo = (() => {
 
 		addEventListeners() {
 			this.taskForm.DOM.form.addEventListener('validSubmit', (event) => {
-				const formData = event.detail;
+				const formData = event.detail.formData;
 
-				console.log(`Text "${formData}" submited`);
 				this.taskList.add(new Task(formData, false));
 			});
 
