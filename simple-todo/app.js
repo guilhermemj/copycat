@@ -1,3 +1,30 @@
+
+// ==================
+//  Helper Functions
+// ==================
+
+const onDocumentReady = (fn) => {
+	const hasDOMLoaded = (document.attachEvent ?
+		document.readyState === "complete" :
+		document.readyState !== "loading"
+	);
+
+	if (hasDOMLoaded) {
+		fn();
+	} else {
+		document.addEventListener('DOMContentLoaded', fn);
+	}
+};
+
+const delegateEvent = (element, eventName, selector, handler) => {
+	element.addEventListener(eventName, (event) => {
+		if (event.target && event.target.matches(selector)) {
+			handler(event);
+		}
+	});
+};
+
+
 // =======================
 //  Data-Relative Classes
 // =======================
@@ -94,15 +121,15 @@ const taskListInterface = (() => {
 
 		const targetTask = taskList[taskIndex];
 
-		Object.keys(targetTask).forEach((value, key) => {
-			// Add validation for "protected" attributes like ID
-			console.log(key, value);
+		// TODO: Add validation for "protected" attributes like ID
+		Object.keys(targetTask).forEach((key) => {
 
 			if (
 				typeof data[key] === 'undefined' ||
 				data[key] === targetTask[key]
 			) return;
 
+			// console.log(`Update "${key}" to "${data[key]}"`);
 			targetTask[key] = data[key];
 		});
 
@@ -202,7 +229,7 @@ const { SimpleForm, SimpleList } = (() => {
 		}
 	}
 
-
+	// TODO: Improve this - conditional classes
 	const simpleTemplateRender = (template, context) => {
 		const isValidValue = (value) => (
 			typeof value !== 'undefined' &&
@@ -284,30 +311,6 @@ const { SimpleForm, SimpleList } = (() => {
 
 const simpleTodo = (() => {
 
-	//  Helper Functions
-	// ------------------
-
-	const onDocumentReady = (fn) => {
-		const hasDOMLoaded = (document.attachEvent ?
-			document.readyState === "complete" :
-			document.readyState !== "loading"
-		);
-
-		if (hasDOMLoaded) {
-			fn();
-		} else {
-			document.addEventListener('DOMContentLoaded', fn);
-		}
-	};
-
-	const delegateEvent = (element, eventName, selector, handler) => {
-		element.addEventListener(eventName, (event) => {
-			if (event.target && event.target.matches(selector)) {
-				handler(event);
-			}
-		});
-	};
-
 
 	//  Application Class
 	// --------------------
@@ -345,11 +348,6 @@ const simpleTodo = (() => {
 				this.taskList.add(newTask);
 			});
 
-			delegateEvent(this.taskList.DOM.list, 'click', '.task', (event) => {
-				// TODO: Finish this
-				event.target.classList.toggle('task-complete');
-			});
-
 			delegateEvent(this.taskList.DOM.list, 'click', '[data-action=remove]', (event) => {
 				if (!event.target) return;
 
@@ -363,6 +361,23 @@ const simpleTodo = (() => {
 
 				// Update DOM
 				this.taskList.remove(taskId);
+			});
+
+			delegateEvent(this.taskList.DOM.list, 'click', '.task', (event) => {
+				const targetElem = event.target;
+				if (!targetElem) return;
+
+				event.preventDefault();
+				event.stopPropagation();
+
+				const taskId = targetElem.getAttribute('data-id');
+				const wasDone = targetElem.classList.contains('task-complete');
+
+				// API -> PUT
+				taskListInterface.update(taskId, { isDone: !wasDone });
+
+				// Update DOM
+				targetElem.classList[wasDone ? 'remove' : 'add']('task-complete');
 			});
 		}
 	}
