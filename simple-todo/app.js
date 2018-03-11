@@ -59,7 +59,6 @@ const { LocalStorageDataBase, Task } = (() => {
 		constructor(text, isDone) {
 			this.text     = text;
 			this.id       = getNextTaskId();
-			this.position = 1;
 			this.isDone   = !!isDone;
 		}
 
@@ -92,13 +91,21 @@ const taskListInterface = (() => {
 
 	// GET Method
 	const getData = (taskId) => {
-		if (typeof taskId == 'undefined') return taskList;
+		if (typeof taskId === 'undefined') {
+			return taskList;
+		}
 
-		if (!isValidId(taskId)) throw new TypeError('Invalid task ID');
+		// 400 Error
+		if (!isValidId(taskId)) {
+			throw new TypeError('Invalid task ID');
+		}
 
 		const foundTask = taskList.find((task) => task.id == taskId);
 
-		if (!foundTask) throw new ReferenceError('Task not found');
+		// 404 Error
+		if (!foundTask) {
+			throw new ReferenceError('Task not found');
+		}
 
 		return foundTask;
 	};
@@ -113,11 +120,17 @@ const taskListInterface = (() => {
 
 	// PUT Method
 	const updateItem = (taskId, data) => {
-		if (!isValidId(taskId)) throw new TypeError('Invalid task ID');
+		// 400 Error
+		if (!isValidId(taskId)) {
+			throw new TypeError('Invalid task ID');
+		}
 
 		const taskIndex = taskList.findIndex((task) => task.id == taskId);
 
-		if (taskIndex == -1) throw new ReferenceError('Task not found');
+		// 404 Error
+		if (taskIndex === -1) {
+			throw new ReferenceError('Task not found');
+		}
 
 		const targetTask = taskList[taskIndex];
 
@@ -127,9 +140,10 @@ const taskListInterface = (() => {
 			if (
 				typeof data[key] === 'undefined' ||
 				data[key] === targetTask[key]
-			) return;
+			) {
+				return;
+			}
 
-			// console.log(`Update "${key}" to "${data[key]}"`);
 			targetTask[key] = data[key];
 		});
 
@@ -138,11 +152,17 @@ const taskListInterface = (() => {
 
 	// DELETE Method
 	const deleteItem = (taskId) => {
-		if (!isValidId(taskId)) throw new TypeError('Invalid task ID');
+		// 400 Error
+		if (!isValidId(taskId)) {
+			throw new TypeError('Invalid task ID');
+		}
 
 		const taskIndex = taskList.findIndex((task) => task.id == taskId);
 
-		if (taskIndex == -1) throw new ReferenceError('Task not found');
+		// 404 Error
+		if (taskIndex === -1) {
+			throw new ReferenceError('Task not found');
+		}
 
 		taskList.splice(taskIndex, 1);
 		dataBase.saveData(taskList);
@@ -168,10 +188,9 @@ const { SimpleForm, SimpleList } = (() => {
 
 	class SimpleForm {
 		constructor(selector) {
-			if (
-				typeof selector !== 'string' ||
-				selector === ''
-			) throw new TypeError(`'${selector}' is not a valid selector.`);
+			if (typeof selector !== 'string' || selector === '') {
+				throw new TypeError(`'${selector}' is not a valid selector.`);
+			}
 
 			this._selector = selector;
 
@@ -192,13 +211,21 @@ const { SimpleForm, SimpleList } = (() => {
 		}
 
 		updateElementReferences() {
-			this.DOM.form = document.querySelector(this._selector);
+			const formElement = document.querySelector(this._selector);
 
-			if (!this.DOM.form) throw new ReferenceError('Form element not found');
+			if (!formElement) {
+				throw new ReferenceError('Form element not found');
+			}
 
-			this.DOM.input = this.DOM.form.querySelector('[name=task-text]');
+			this.DOM.form = formElement;
 
-			if (!this.DOM.input) throw new ReferenceError('Input element not found');
+			const inputElement = this.DOM.form.querySelector('[name=task-text]');
+
+			if (!inputElement) {
+				throw new ReferenceError('Input element not found');
+			}
+
+			this.DOM.input = inputElement;
 		}
 
 		addEventListeners() {
@@ -213,7 +240,9 @@ const { SimpleForm, SimpleList } = (() => {
 		validate() {
 			this.DOM.form.classList.add(this.classes.validityChecked);
 
-			if (!this.DOM.form.checkValidity()) return;
+			if (!this.DOM.form.checkValidity()) {
+				return;
+			}
 
 			this.submit(this.DOM.input.value);
 		}
@@ -234,7 +263,6 @@ const { SimpleForm, SimpleList } = (() => {
 		}
 	}
 
-	// TODO: Improve this - conditional classes
 	const simpleTemplateRender = (template, context) => {
 		const isValidValue = (value) => (
 			typeof value !== 'undefined' &&
@@ -253,10 +281,9 @@ const { SimpleForm, SimpleList } = (() => {
 
 	class SimpleList {
 		constructor(selector) {
-			if (
-				typeof selector !== 'string' ||
-				selector === ''
-			) throw new TypeError(`'${selector}' is not a valid selector.`);
+			if (typeof selector !== 'string' || selector === '') {
+				throw new TypeError(`'${selector}' is not a valid selector.`);
+			}
 
 			this._selector = selector;
 			this.DOM = {
@@ -269,9 +296,13 @@ const { SimpleForm, SimpleList } = (() => {
 		}
 
 		updateElementReferences() {
-			this.DOM.list = document.querySelector(this._selector);
+			const listElement = document.querySelector(this._selector);
 
-			if (!this.DOM.list) throw new ReferenceError('List element not found');
+			if (!listElement) {
+				throw new ReferenceError('List element not found');
+			}
+
+			this.DOM.list = listElement;
 		}
 
 		add(template, context) {
@@ -292,7 +323,9 @@ const { SimpleForm, SimpleList } = (() => {
 		remove(itemId) {
 			const targetItem = this.DOM.list.querySelector(`[data-id="${itemId}"]`);
 
-			if (!targetItem) throw new ReferenceError(`No elements with data-id="${itemId}".`);
+			if (!targetItem) {
+				throw new ReferenceError(`No elements with data-id="${itemId}".`);
+			}
 
 			this.DOM.list.removeChild(targetItem);
 
@@ -338,8 +371,6 @@ class SimpleTodo {
 		// Add stored tasks
 		if (!!storedData) {
 			storedData.forEach((task) => {
-				console.log(task);
-
 				this.taskList.add(
 					this.templates.task,
 					this.getTaskContext(task),
@@ -430,7 +461,9 @@ class SimpleTodo {
 		// Update DOM
 		const targetElement = this.taskList.DOM.list.querySelector(`[data-id="${taskId}"]`);
 
-		if (!targetElement) throw new ReferenceError(`No elements with data-id="${taskId}".`);
+		if (!targetElement) {
+			throw new ReferenceError(`No elements with data-id="${taskId}".`);
+		}
 
 		targetElement.classList[isDone ? 'add' : 'remove']('task-complete');
 	}
