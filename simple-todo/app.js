@@ -76,9 +76,9 @@ const { LocalStorageDataBase, Task } = (() => {
 })();
 
 
-// =====================
-//  Task List Interface
-// =====================
+// ===========================
+//  Task List Interface (API)
+// ===========================
 
 const taskListInterface = (() => {
 	const dataBase   = new LocalStorageDataBase('simpleDB');
@@ -309,87 +309,96 @@ const { SimpleForm, SimpleList } = (() => {
 //  Application
 // =============
 
-const simpleTodo = (() => {
-
-
-	//  Application Class
-	// --------------------
-
-	class SimpleTodo {
-		constructor () {
-			// Create DOM interacting instances
-			this.taskForm = new SimpleForm('[data-is=task-form]');
-			this.taskList = new SimpleList('[data-is=task-list]');
-		}
-
-		init() {
-			this.taskForm.init();
-			this.taskList.init();
-
-			const storedData = taskListInterface.get();
-
-			// Add stored tasks
-			if (!!storedData) {
-				storedData.forEach((task) => { this.taskList.add(task); });
-			}
-
-			this.addEventListeners();
-		}
-
-		addEventListeners() {
-			this.taskForm.DOM.form.addEventListener('validSubmit', (event) => {
-				const formData = event.detail.formData;
-				const newTask  = new Task(formData, false);
-
-				// API -> POST
-				taskListInterface.add(newTask);
-
-				// Update DOM
-				this.taskList.add(newTask);
-			});
-
-			delegateEvent(this.taskList.DOM.list, 'click', '[data-action=remove]', (event) => {
-				if (!event.target) return;
-
-				event.preventDefault();
-				event.stopPropagation();
-
-				const taskId = event.target.parentNode.getAttribute('data-id');
-
-				// API -> DELETE
-				taskListInterface.delete(taskId);
-
-				// Update DOM
-				this.taskList.remove(taskId);
-			});
-
-			delegateEvent(this.taskList.DOM.list, 'click', '.task', (event) => {
-				const targetElem = event.target;
-				if (!targetElem) return;
-
-				event.preventDefault();
-				event.stopPropagation();
-
-				const taskId = targetElem.getAttribute('data-id');
-				const wasDone = targetElem.classList.contains('task-complete');
-
-				// API -> PUT
-				taskListInterface.update(taskId, { isDone: !wasDone });
-
-				// Update DOM
-				targetElem.classList[wasDone ? 'remove' : 'add']('task-complete');
-			});
-		}
+class SimpleTodo {
+	constructor () {
+		// Create DOM interacting instances
+		this.taskForm = new SimpleForm('[data-is=task-form]');
+		this.taskList = new SimpleList('[data-is=task-list]');
 	}
 
-	// Create singleton instance
-	const singleton = new SimpleTodo();
+	init() {
+		this.taskForm.init();
+		this.taskList.init();
 
-	// Init application when DOM has loaded
-	onDocumentReady(() => {
-		singleton.init();
-	});
+		const storedData = taskListInterface.get();
 
-	// Make it available globally
-	return singleton;
-})();
+		// Add stored tasks
+		if (!!storedData) {
+			storedData.forEach((task) => { this.taskList.add(task); });
+		}
+
+		this.addEventListeners();
+	}
+
+	addEventListeners() {
+		this.taskForm.DOM.form.addEventListener('validSubmit', (event) => {
+			if (!(event instanceof Event)) {
+				throw new TypeError('This function must be bound to an EventListener');
+			}
+
+			this.addTask(new Task(event.detail.formData, false));
+		});
+
+		delegateEvent(this.taskList.DOM.list, 'click', '[data-action=remove]', (event) => {
+			if (!(event instanceof Event)) {
+				throw new TypeError('This function must be bound to an EventListener');
+			}
+
+			event.preventDefault();
+			event.stopPropagation();
+
+			this.removeTask(event.target.parentNode.getAttribute('data-id'));
+		});
+
+		delegateEvent(this.taskList.DOM.list, 'click', '.task', (event) => {
+			if (!(event instanceof Event)) {
+				throw new TypeError('This function must be bound to an EventListener');
+			}
+
+			event.preventDefault();
+			event.stopPropagation();
+
+			const targetElement = event.target;
+			const taskId  = targetElement.getAttribute('data-id');
+			const wasDone = targetElement.classList.contains('task-complete');
+
+			this.updateTaskCompletion(taskId, !wasDone);
+		});
+	}
+
+	addTask(newTask) {
+		// API -> POST
+		taskListInterface.add(newTask);
+
+		// Update DOM
+		this.taskList.add(newTask);
+	}
+
+	removeTask(taskId) {
+		// API -> DELETE
+		taskListInterface.delete(taskId);
+
+		// Update DOM
+		this.taskList.remove(taskId);
+	}
+
+	updateTaskCompletion(taskId, isDone) {
+		// API -> PUT
+		taskListInterface.update(taskId, { isDone });
+
+		// Update DOM
+		const targetElement = this.taskList.DOM.list.querySelector(`[data-id="${taskId}"]`);
+
+		if (!targetElement) throw new ReferenceError(`No elements with data-id="${taskId}".`);
+
+		targetElement.classList[isDone ? 'add' : 'remove']('task-complete');
+	}
+}
+
+// Create singleton instance
+const simpleTodo = new SimpleTodo();
+
+// Init application when DOM has loaded
+onDocumentReady(() => {
+	simpleTodo.init();
+});
