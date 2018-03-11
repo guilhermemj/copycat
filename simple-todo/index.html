@@ -11,7 +11,7 @@
 </head>
 <body>
 	<script type="text/template" id="task-template">
-		<li class="task" data-is="task" data-id="{{id}}">
+		<li class="task {{isDoneClass}}" data-is="task" data-id="{{id}}">
 			{{text}}
 			<button class="close-btn" data-action="remove">remove</button>
 		</li>

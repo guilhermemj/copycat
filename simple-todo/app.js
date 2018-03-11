@@ -174,7 +174,12 @@ const { SimpleForm, SimpleList } = (() => {
 			) throw new TypeError(`'${selector}' is not a valid selector.`);
 
 			this._selector = selector;
-			this.DOM = {};
+
+			this.DOM = {
+				form: null,
+				input: null,
+			};
+
 			this.classes = {
 				validityChecked: 'was-validated'
 			};
@@ -254,7 +259,9 @@ const { SimpleForm, SimpleList } = (() => {
 			) throw new TypeError(`'${selector}' is not a valid selector.`);
 
 			this._selector = selector;
-			this.DOM = {};
+			this.DOM = {
+				list: null,
+			};
 		}
 
 		init() {
@@ -267,17 +274,17 @@ const { SimpleForm, SimpleList } = (() => {
 			if (!this.DOM.list) throw new ReferenceError('List element not found');
 		}
 
-		add(item) {
-			// TODO: Add flexibility to template getting.
-			const templateWrapper = document.getElementById('task-template');
+		add(template, context) {
+			const renderedHTML = simpleTemplateRender(template, context);
 
-			if (!templateWrapper) throw new ReferenceError('Template element was not found');
-
-			this.DOM.list.innerHTML += simpleTemplateRender(templateWrapper.innerHTML, item);
+			this.DOM.list.innerHTML += renderedHTML;
 
 			this.DOM.list.dispatchEvent(
 				new CustomEvent('itemAdded', {
-					detail: { item }
+					detail: {
+						itemId: context.id,
+						renderedHTML,
+					}
 				})
 			);
 		}
@@ -314,20 +321,51 @@ class SimpleTodo {
 		// Create DOM interacting instances
 		this.taskForm = new SimpleForm('[data-is=task-form]');
 		this.taskList = new SimpleList('[data-is=task-list]');
+
+		this.templates = {
+			task: null,
+		};
 	}
 
 	init() {
 		this.taskForm.init();
 		this.taskList.init();
 
+		this.getTemplates();
+
 		const storedData = taskListInterface.get();
 
 		// Add stored tasks
 		if (!!storedData) {
-			storedData.forEach((task) => { this.taskList.add(task); });
+			storedData.forEach((task) => {
+				console.log(task);
+
+				this.taskList.add(
+					this.templates.task,
+					this.getTaskContext(task),
+				);
+			});
 		}
 
 		this.addEventListeners();
+	}
+
+	getTemplates() {
+		const taskTemplate = document.getElementById('task-template');
+
+		if (!taskTemplate) {
+			throw new ReferenceError('Task template element was not found');
+		}
+
+		this.templates.task = taskTemplate.innerHTML;
+	}
+
+	getTaskContext(task) {
+		return {
+			text: task.text,
+			id: task.id,
+			isDoneClass: task.isDone ? 'task-complete' : '',
+		};
 	}
 
 	addEventListeners() {
@@ -371,7 +409,10 @@ class SimpleTodo {
 		taskListInterface.add(newTask);
 
 		// Update DOM
-		this.taskList.add(newTask);
+		this.taskList.add(
+			this.templates.task,
+			this.getTaskContext(newTask)
+		);
 	}
 
 	removeTask(taskId) {
