@@ -2,7 +2,7 @@
 
 A simple to-do list made with VanillaJS. Based on the [project with the same name](https://github.com/cauequeiroz/simpletodo) by [Caue Queiroz](http://cauequeiroz.com.br/about/).
 
-You can see it in action [here](https://guilhermemj.github.io/copycat/simple-todo) (lacks IE support).
+You can see it in action [here](https://guilhermemj.github.io/simple-todo) (lacks IE support).
 
 ## Features
 
