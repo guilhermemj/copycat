@@ -1,11 +1,24 @@
-# Copycat
+# Simple Todo
 
-Sometimes, thinking of a brand-new-revolutionary-world-changer project is very hard and you just want to improve or test your own skills by remaking some great projects you just saw on the web. Well, this is my space for doing it.
+A simple to-do list made with VanillaJS. Based on the [project with the same name](https://github.com/cauequeiroz/simpletodo) by [Caue Queiroz](http://cauequeiroz.com.br/about/).
 
-If you want to see my original ideas and random stuff, please check my [playground repo](https://github.com/guilhermemj/playground).
+You can see it in action [here](https://guilhermemj.github.io/copycat/simple-todo) (lacks IE support).
 
-## To copy, not to steal
+## Features
 
-The purpose of this repo is to learn and practice only. Everything made here will have a mention on the project which inspired it and a link whenever possible.
+* Add/Remove tasks;
+* Mark items as completed;
+* Integrated with localStorage so you won't lose your list by reloading the window or closing the browser.
 
-If you find something you did here, please consider it a homage, but if you want it to be removed don't hesitate in opening an issue (or contacting me directly) and it will be gone right away.
+## Involved studies
+
+* localStorage API;
+* ES6 Classes and best practices;
+* Data Interfaces;
+* Working with Events in VanillaJS;
+* DOM manipulation with VanillaJS;
+* Data validation with proper Error throwing.
+
+As a bonus, I trained some concepts of RESTful APIs, separation of concerns and architectural patterns (in a very tiny scale).
+
+![Screenshot](./screenshot.png)
